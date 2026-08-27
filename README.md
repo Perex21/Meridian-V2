@@ -106,6 +106,52 @@ frontend/
   lib/          typed API client, store, formatters
 docs/scoring-methodology.md   dimension-by-dimension derivation
 ```
+## Architecture
+
+Meridian is built around a server-authoritative simulation engine. The frontend presents the investigation workflow, while the backend owns the dataset, session state, thesis lock, telemetry and scoring.
+
+```text
+┌──────────────────────┐
+│      Next.js UI      │
+│  React + TypeScript  │
+└──────────┬───────────┘
+           │ REST API
+           ▼
+┌──────────────────────┐
+│     FastAPI API      │
+│  Auth + stage routes │
+└──────────┬───────────┘
+           │
+           ▼
+┌──────────────────────┐
+│   Simulation Engine  │
+│ Dataset · Validation │
+│ State · Telemetry    │
+└──────────┬───────────┘
+           │
+     ┌─────┴─────┐
+     ▼           ▼
+┌─────────┐ ┌────────────┐
+│ SQLite  │ │ PostgreSQL │
+│ fallback│ │ production │
+└─────────┘ └────────────┘
+```
+
+### Server authority
+
+The client never owns simulation truth. State transitions are validated server-side, the thesis becomes immutable once submitted, and scoring is calculated from the dataset, session state and recorded telemetry.
+
+### Simulation lifecycle
+
+1. A cohort is created with a deterministic seed.
+2. The validation gate verifies that the generated dataset preserves the intended survivorship-bias trap.
+3. An analyst investigates the visible portfolio and commits a thesis.
+4. The withheld failure archive is revealed.
+5. The analyst revises the model and allocates capital.
+6. The scoring engine evaluates the complete session and produces the final scorecards.
+
+This separation keeps the teaching mechanics reproducible while making each scoring decision traceable to the underlying session data.
+
 
 ### Determinism
 
