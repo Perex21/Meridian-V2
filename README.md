@@ -244,3 +244,5 @@ The simulation emphasizes:
 
 \- Understanding how selection bias can affect investment theses
 
+
+## the current process is still in it's prototype.
