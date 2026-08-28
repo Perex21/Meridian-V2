@@ -3118,3 +3118,11 @@ input[type="range"].dealflow-slider::-moz-range-thumb { background: var(--teal);
 
 .sidebar-brand-logo { display: block; width: min(174px, 100%); height: auto; max-height: 58px; object-fit: contain; object-position: left center; }
 @media (max-width: 700px) { .sidebar-brand-logo { width: 148px; } }
+
+/* The wordmark ships as two transparent PNGs: white ink for the dark themes,
+   --ink-1 and --teal for the light one. Dark is the default, so the light asset
+   starts hidden. Both selectors below outweigh the shared rule above on
+   specificity, so source order here is not load-bearing. */
+.sidebar-brand-logo-light { display: none; }
+:root[data-theme="light"] .sidebar-brand-logo-dark { display: none; }
+:root[data-theme="light"] .sidebar-brand-logo-light { display: block; }

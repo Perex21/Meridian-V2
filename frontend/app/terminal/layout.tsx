@@ -48,7 +48,14 @@ export default function TerminalLayout({ children }: { children: React.ReactNode
     <div className="terminal-app-shell">
       <aside className="terminal-sidebar" aria-label="Meridian stages">
           <div className="sidebar-brand">
-            <img className="sidebar-brand-logo" src="/brand/meridian-partners-logo.png" alt="Meridian Partners" />
+            {/* Two assets, one per theme, swapped in CSS rather than in React.
+                The theme is stamped onto <html> by THEME_BOOTSTRAP before
+                hydration, so it is not available at render time -- picking the
+                src here would reintroduce the hydration mismatch that bootstrap
+                exists to avoid. Both carry the same alt; display:none keeps the
+                hidden one out of the accessibility tree. */}
+            <img className="sidebar-brand-logo sidebar-brand-logo-dark" src="/brand/meridian-partners-logo.png" alt="Meridian Partners" width={600} height={200} />
+            <img className="sidebar-brand-logo sidebar-brand-logo-light" src="/brand/meridian-partners-logo-light.png" alt="Meridian Partners" width={600} height={200} />
           </div>
         <nav className="sidebar-nav">
           {state?.rail.map((stage) => {
