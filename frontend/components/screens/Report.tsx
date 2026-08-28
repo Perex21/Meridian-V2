@@ -3,6 +3,8 @@
 import { useEffect, useRef, useState } from "react";
 import { ApiError, api } from "@/lib/api";
 import { useStore } from "@/lib/store";
+import { IconArrowRight } from "@/components/Icon";
+import TransferTest from "@/components/TransferTest";
 
 export default function Report() {
   const { sessionId, toast } = useStore();
@@ -10,6 +12,7 @@ export default function Report() {
   const [html, setHtml] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [attempt, setAttempt] = useState(0);
+  const [testing, setTesting] = useState(false);
 
   useEffect(() => {
     if (!sessionId) return;
@@ -55,6 +58,10 @@ export default function Report() {
     iframeRef.current?.contentWindow?.print();
   }
 
+  if (testing) {
+    return <TransferTest onBack={() => setTesting(false)} />;
+  }
+
   return (
     <>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 20, flexWrap: "wrap", gap: 12 }}>
@@ -98,9 +105,21 @@ export default function Report() {
             borderRadius: 8, background: "var(--report-paper)",
           }}
         />
-      ) : (
+            ) : (
         !error && <p className="note">Generating…</p>
       )}
+
+      <div className="report-footer-action">
+        <div>
+          <span className="eyebrow">One last thing</span>
+          <strong>Does this habit transfer?</strong>
+          <p className="note">Four short scenarios to test the reasoning habit beyond investing.</p>
+        </div>
+        <button className="pri" type="button" onClick={() => setTesting(true)}>
+          <span>Start transfer test</span><IconArrowRight size={14} />
+        </button>
+      </div>
     </>
+
   );
 }

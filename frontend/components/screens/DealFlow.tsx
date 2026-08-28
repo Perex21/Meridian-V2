@@ -1,10 +1,11 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, type CSSProperties } from "react";
 import { api, type Deal } from "@/lib/api";
 import { money, mult, pct } from "@/lib/format";
 import { useStore } from "@/lib/store";
 import CompanySymbol from "@/components/CompanySymbol";
+import EvaluationInterstitial from "@/components/EvaluationInterstitial";
 
 interface DealFlowResponse {
   deals: Deal[];
@@ -54,6 +55,7 @@ export default function DealFlow() {
   const [maxCheque, setMaxCheque] = useState(30_000_000);
   const [step, setStep] = useState(1_000_000);
   const [busy, setBusy] = useState(false);
+  const [evaluating, setEvaluating] = useState(false);
 
   useEffect(() => {
     if (!sessionId) return;
@@ -160,7 +162,7 @@ export default function DealFlow() {
     try {
       await api.post(`/sessions/${sessionId}/deploy`);
       await refreshState();
-      await go("results");
+      setEvaluating(true);
     } catch (e) {
       toast("Could not deploy", e instanceof Error ? e.message : "Check your allocation.");
     } finally {
@@ -172,7 +174,21 @@ export default function DealFlow() {
   // unreachable while the copy claimed "40 live deals".
   const top = deals.slice(0, 6);
   const rest = deals.slice(6);
-  const byId = useMemo(() => new Map(deals.map((d) => [d.id, d])), [deals]);
+    const byId = useMemo(() => new Map(deals.map((d) => [d.id, d])), [deals]);
+
+  if (evaluating) {
+    return (
+      <EvaluationInterstitial
+        companies={picks.map((id) => ({
+          id,
+          name: byId.get(id)?.name ?? `Deal ${id}`,
+          cheque: sizes[String(id)] ?? 0,
+        }))}
+        total={pool}
+        onContinue={() => void go("results")}
+      />
+    );
+  }
 
   const card = (d: Deal) => (
     <div
@@ -253,7 +269,12 @@ export default function DealFlow() {
                   step={step}
                   value={amount}
                   onChange={(e) => resize(id, Number(e.target.value))}
-                  style={{ width: "100%", accentColor: share > 0.3 ? "var(--orange)" : "var(--navy)" }}
+                  className="dealflow-slider"
+                  style={{
+                    width: "100%",
+                    "--fill": `${((amount - minCheque) / Math.max(1, maxCheque - minCheque)) * 100}%`,
+                    accentColor: share > 0.3 ? "var(--orange)" : "var(--teal)",
+                  } as CSSProperties}
                   aria-label={`Cheque size for ${d?.name ?? id}`}
                 />
               </div>

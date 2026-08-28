@@ -7,10 +7,13 @@ import { IconCheck, IconLock } from "@/components/Icon";
 import ProfileMenu from "@/components/ProfileMenu";
 import RunPanel from "@/components/RunPanel";
 import WaveCanvas from "@/components/WaveCanvas";
+import AmbientAudio from "@/components/AmbientAudio";
+import Methodology from "@/components/Methodology";
 
 export default function TerminalLayout({ children }: { children: React.ReactNode }) {
   const { ready, state } = useStore();
   const [runOpen, setRunOpen] = useState(false);
+  const [methodologyOpen, setMethodologyOpen] = useState(false);
   const [minElapsed, setMinElapsed] = useState(false);
   const [navBusy, navigate] = useNav();
   const mountedAt = useRef(Date.now());
@@ -44,10 +47,9 @@ export default function TerminalLayout({ children }: { children: React.ReactNode
   return (
     <div className="terminal-app-shell">
       <aside className="terminal-sidebar" aria-label="Meridian stages">
-        <div className="sidebar-brand">
-          <div className="sidebar-brand-mark">M</div>
-          <div><strong>Meridian</strong><span>Partners</span></div>
-        </div>
+          <div className="sidebar-brand">
+            <img className="sidebar-brand-logo" src="/brand/meridian-partners-logo.png" alt="Meridian Partners" />
+          </div>
         <nav className="sidebar-nav">
           {state?.rail.map((stage) => {
             const isPending = stage.state === "pending";
@@ -83,11 +85,13 @@ export default function TerminalLayout({ children }: { children: React.ReactNode
             <div className="header-context"><span className="header-eyebrow">Meridian Partners</span><span className="header-separator">/</span><span className="header-page">Analyst terminal</span></div>
             <div className="header-actions">
               {state && <div className="rail-mini" aria-label="Run progress">{state.rail.map((r) => <i key={r.key} className={r.state} />)}</div>}
+              <button className="methodology-header-button" type="button" onClick={() => setMethodologyOpen(true)}>Methodology</button>
+              <AmbientAudio />
               <ProfileMenu onViewRun={() => setRunOpen(true)} />
             </div>
           </div>
         </header>
-        <main className="wrap">{children}</main>
+        <main className="wrap">{methodologyOpen ? <Methodology onClose={() => setMethodologyOpen(false)} /> : children}</main>
       </div>
       <RunPanel open={runOpen} />
     </div>
