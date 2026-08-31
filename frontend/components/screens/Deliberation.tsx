@@ -17,6 +17,17 @@ export default function Deliberation() {
   const [remaining, setRemaining] = useState<number>(total);
   const synced = useRef(false);
 
+  // Purely cosmetic during the server-timed pause -- rotates a short phrase so
+  // the wait reads as active review rather than a stalled screen. Never used
+  // as a source of truth; the countdown and "done" state stay server-derived.
+  const REVIEW_PHRASES = [
+    "Cross-referencing evidence",
+    "Weighing confidence signals",
+    "Checking falsification condition",
+    "Reconciling thesis variables",
+  ];
+  const [phraseIndex, setPhraseIndex] = useState(0);
+
   useEffect(() => {
     if (!sessionId) return;
     let alive = true;
@@ -39,6 +50,14 @@ export default function Deliberation() {
     const id = setInterval(() => {
       setRemaining((previous) => Math.max(0, previous - 1));
     }, 1000);
+    return () => clearInterval(id);
+  }, [remaining > 0]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  useEffect(() => {
+    if (remaining <= 0) return;
+    const id = setInterval(() => {
+      setPhraseIndex((i) => (i + 1) % REVIEW_PHRASES.length);
+    }, 3800);
     return () => clearInterval(id);
   }, [remaining > 0]); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -75,15 +94,20 @@ export default function Deliberation() {
 
       <section className="deliberation-hero">
         <div className="deliberation-hero-copy">
-          <div className="deliberation-status-mark"><IconBuilding size={22} /></div>
-          <div><div className="eyebrow">You have been asked to wait outside</div><h2>The partners are deliberating</h2><p>The pause is part of the exercise. The committee is assessing what you chose before the hidden outcomes become available.</p></div>
+          <div className={`deliberation-status-mark${done ? "" : " is-active"}`}><IconBuilding size={22} /></div>
+          <div>
+            <div className="eyebrow">You have been asked to wait outside</div>
+            <h2>The partners are deliberating</h2>
+            <p>The pause is part of the exercise. The committee is assessing what you chose before the hidden outcomes become available.</p>
+            {!done && <div className="deliberation-hero-status-line"><span className="step-dot" />{REVIEW_PHRASES[phraseIndex]}…</div>}
+          </div>
         </div>
         <div className="deliberation-clock-block"><div className="deliberation-clock">{display}</div><span>{done ? "Committee review complete" : "Authoritative session timer"}</span></div>
       </section>
 
       <div className="deliberation-progress-wrap">
         <div className="deliberation-progress-label"><span>Committee review progress</span><strong>{done ? "Complete" : `${remaining}s remaining`}</strong></div>
-        <div className="deliberation-progress-track"><i style={{ width: `${completionPercent}%` }} /></div>
+        <div className={`deliberation-progress-track${done ? "" : " is-active"}`}><i style={{ width: `${completionPercent}%` }} /></div>
         <div className="deliberation-progress-steps"><span className="is-done"><IconCheck size={12} /> Thesis received</span><span className={!done ? "is-current" : "is-done"}>{done ? <IconCheck size={12} /> : <span className="step-dot" />} Committee review</span><span className={done ? "is-current" : ""}>{done ? <IconArrowRight size={12} /> : <IconLock size={12} />} Next evidence stage</span></div>
       </div>
 

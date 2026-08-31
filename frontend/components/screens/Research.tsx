@@ -58,6 +58,11 @@ export default function Research() {
   const [activeIndex, setActiveIndex] = useState(0);
   const searchWrapRef = useRef<HTMLDivElement>(null);
   const [openId, setOpenId] = useState<number | null>(null);
+  // Client-side pagination over whatever `rows` currently holds (either the
+  // filtered load() result or a search's matches). 15 per page keeps the
+  // boxed grid from requiring a scroll to see a full page of companies.
+  const PAGE_SIZE = 15;
+  const [page, setPage] = useState(1);
   const [scatter, setScatter] = useState<ScatterData | null>(null);
   const [xAxis, setXAxis] = useState(0);
   const [yAxis, setYAxis] = useState(1);
@@ -77,6 +82,11 @@ export default function Research() {
   }, [sessionId, features, sectors, cities]);
 
   useEffect(() => { void load(); }, [load]);
+
+  // Jump back to page 1 whenever the underlying row set changes -- a new
+  // filter or search result shouldn't leave the user stranded on a page
+  // that may no longer exist.
+  useEffect(() => { setPage(1); }, [rows]);
 
   useEffect(() => {
     if (!sessionId) return;
@@ -108,6 +118,26 @@ export default function Research() {
 
   const toggle = (list: string[], set: (v: string[]) => void, value: string) =>
     set(list.includes(value) ? list.filter((x) => x !== value) : [...list, value]);
+
+  const totalPages = Math.max(1, Math.ceil(rows.length / PAGE_SIZE));
+  const pageRows = useMemo(
+    () => rows.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE),
+    [rows, page],
+  );
+
+  // Numbered pages with an ellipsis once there are more pages than fit
+  // comfortably: always show first, last, and a window around the current page.
+  const pageList = useMemo(() => {
+    const list: (number | "…")[] = [];
+    for (let p = 1; p <= totalPages; p++) {
+      if (p === 1 || p === totalPages || Math.abs(p - page) <= 1) {
+        list.push(p);
+      } else if (list[list.length - 1] !== "…") {
+        list.push("…");
+      }
+    }
+    return list;
+  }, [totalPages, page]);
 
   async function runSearch() {
     if (!sessionId || !query.trim()) return;
@@ -217,14 +247,9 @@ export default function Research() {
 
   return (
     <>
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", marginBottom: 18, flexWrap: "wrap", gap: 12 }}>
-        <div>
-          <div className="eyebrow">Step one</div>
-          <h2 className="stitle" style={{ fontSize: 22 }}>Portfolio history</h2>
-        </div>
-        <button className="pri" onClick={() => navigate("thesis")} disabled={navBusy}>
-          {navBusy ? "Loading…" : "Draft thesis"} <IconArrowRight size={14} />
-        </button>
+      <div style={{ marginBottom: 18 }}>
+        <div className="eyebrow">Step one</div>
+        <h2 className="stitle" style={{ fontSize: 22 }}>Portfolio history</h2>
       </div>
 
       <div ref={searchWrapRef} style={{ position: "relative", marginBottom: 12 }}>
@@ -512,7 +537,7 @@ export default function Research() {
 
       <div className="card">
         <div style={{ padding: "6px 22px 14px", overflowX: "auto" }}>
-          <table>
+          <table className="research-table">
             <thead>
               <tr>
                 <th>Company</th><th>Sector</th><th>HQ</th>
@@ -521,7 +546,7 @@ export default function Research() {
               </tr>
             </thead>
             <tbody>
-              {rows.map((r) => (
+              {pageRows.map((r) => (
                 <tr key={r.id} className="clickable" onClick={() => setOpenId(r.id)}>
                   <td><strong>{searchNote ? highlight(r.name, query) : r.name}</strong></td>
                   <td>
@@ -549,14 +574,86 @@ export default function Research() {
               ))}
             </tbody>
           </table>
-          <p className="note" style={{ paddingTop: 10 }}>
-            {total > rows.length
-              ? `Showing ${rows.length} of ${total} companies. Click a row for the full profile.`
-              : rows.length === 0
+          <div className="research-pagination">
+            <p className="note" style={{ margin: 0 }}>
+              {rows.length === 0
                 ? "No companies match these filters."
-                : "Click a row for the full profile."}
-          </p>
+                : total > rows.length
+                  ? `Showing ${(page - 1) * PAGE_SIZE + 1}–${Math.min(page * PAGE_SIZE, rows.length)} of ${rows.length} loaded (${total} total). Click a row for the full profile.`
+                  : `Showing ${(page - 1) * PAGE_SIZE + 1}–${Math.min(page * PAGE_SIZE, rows.length)} of ${rows.length} companies. Click a row for the full profile.`}
+            </p>
+            {totalPages > 1 && (
+              <div className="research-page-nav">
+                <button
+                  className="research-page-btn"
+                  aria-label="Previous page"
+                  disabled={page === 1}
+                  onClick={() => setPage((p) => Math.max(1, p - 1))}
+                >
+                  <IconChevronDown size={12} style={{ transform: "rotate(90deg)" }} />
+                </button>
+                {pageList.map((p, i) =>
+                  p === "…" ? (
+                    <span key={`dots-${i}`} className="research-page-dots">…</span>
+                  ) : (
+                    <button
+                      key={p}
+                      className={`research-page-btn${p === page ? " is-current" : ""}`}
+                      aria-current={p === page ? "page" : undefined}
+                      onClick={() => setPage(p)}
+                    >
+                      {p}
+                    </button>
+                  ),
+                )}
+                <button
+                  className="research-page-btn"
+                  aria-label="Next page"
+                  disabled={page === totalPages}
+                  onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+                >
+                  <IconChevronDown size={12} style={{ transform: "rotate(-90deg)" }} />
+                </button>
+              </div>
+            )}
+          </div>
         </div>
+      </div>
+
+      <div
+        style={{
+          marginTop: 20,
+          border: "1px solid rgb(var(--accent-rgb) / 0.25)",
+          borderRadius: 10,
+          background: "var(--surface-3)",
+          padding: "16px 20px",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          gap: 16,
+          flexWrap: "wrap",
+        }}
+      >
+        <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+          <div
+            aria-hidden="true"
+            style={{
+              width: 34, height: 34, borderRadius: 8,
+              background: "rgb(var(--accent-rgb) / 0.14)",
+              display: "flex", alignItems: "center", justifyContent: "center",
+              flexShrink: 0,
+            }}
+          >
+            <IconBuilding size={17} style={{ color: "var(--orange)" }} />
+          </div>
+          <div>
+            <div style={{ fontWeight: 600, fontSize: 13 }}>Portfolio history reviewed</div>
+            <p className="note" style={{ margin: 0 }}>Next: turn what you&rsquo;ve seen into a thesis</p>
+          </div>
+        </div>
+        <button className="pri" onClick={() => navigate("thesis")} disabled={navBusy}>
+          {navBusy ? "Loading…" : "Draft thesis"} <IconArrowRight size={14} />
+        </button>
       </div>
 
       {openId !== null && (

@@ -46,74 +46,6 @@ export default function TransferTest({ onBack }: TransferTestProps) {
     setCurrent((value) => value + 1);
   }
 
-  async function downloadResults() {
-    const { jsPDF } = await import("jspdf");
-    const pdf = new jsPDF({ unit: "pt", format: "a4" });
-    const pageWidth = pdf.internal.pageSize.getWidth();
-    const margin = 52;
-    const contentWidth = pageWidth - margin * 2;
-    let y = 58;
-
-    pdf.setFillColor(5, 8, 7);
-    pdf.rect(0, 0, pageWidth, pdf.internal.pageSize.getHeight(), "F");
-    pdf.setTextColor(94, 234, 212);
-    pdf.setFont("courier", "bold");
-    pdf.setFontSize(9);
-    pdf.text("MERIDIAN PARTNERS  ·  TRANSFER TEST", margin, y);
-    y += 26;
-    pdf.setTextColor(245, 247, 246);
-    pdf.setFont("times", "normal");
-    pdf.setFontSize(28);
-    pdf.text("Carry the habit beyond investing", margin, y);
-    y += 22;
-    pdf.setTextColor(180, 195, 190);
-    pdf.setFontSize(11);
-    pdf.text("The missing information identified across four reflection scenarios.", margin, y);
-    y += 24;
-    pdf.setDrawColor(40, 93, 85);
-    pdf.line(margin, y, pageWidth - margin, y);
-    y += 30;
-
-    summary.forEach((item) => {
-      const answerLines = pdf.splitTextToSize(`Missing information: ${item.answer}`, contentWidth - 32);
-      const blockHeight = 62 + answerLines.length * 15;
-      if (y + blockHeight > pdf.internal.pageSize.getHeight() - 56) {
-        pdf.addPage();
-        pdf.setFillColor(5, 8, 7);
-        pdf.rect(0, 0, pageWidth, pdf.internal.pageSize.getHeight(), "F");
-        y = 58;
-      }
-      pdf.setDrawColor(40, 93, 85);
-      pdf.setFillColor(11, 21, 19);
-      pdf.roundedRect(margin, y, contentWidth, blockHeight, 4, 4, "FD");
-      pdf.setTextColor(94, 234, 212);
-      pdf.setFont("times", "normal");
-      pdf.setFontSize(16);
-      pdf.text(item.label, margin + 16, y + 25);
-      pdf.setTextColor(245, 247, 246);
-      pdf.setFontSize(11);
-      pdf.text(item.title, margin + 16, y + 43, { maxWidth: contentWidth - 32 });
-      pdf.setTextColor(190, 205, 200);
-      pdf.setFont("courier", "normal");
-      pdf.setFontSize(9);
-      pdf.text(answerLines, margin + 16, y + 64);
-      y += blockHeight + 14;
-    });
-
-    if (y + 70 > pdf.internal.pageSize.getHeight() - 56) { pdf.addPage(); y = 58; }
-    pdf.setTextColor(94, 234, 212);
-    pdf.setFont("courier", "bold");
-    pdf.setFontSize(9);
-    pdf.text("WHAT YOU PRACTICED", margin, y + 18);
-    pdf.setTextColor(220, 230, 226);
-    pdf.setFont("times", "normal");
-    pdf.setFontSize(12);
-    pdf.text("1. Name the missing evidence", margin, y + 40);
-    pdf.text("2. Calibrate the conclusion", margin + 175, y + 40);
-    pdf.text("3. State what would change your mind", margin + 350, y + 40);
-    pdf.save("meridian-transfer-test-results.pdf");
-  }
-
   if (complete) {
     return (
       <section className="transfer-test-page fade" aria-labelledby="transfer-title">
@@ -133,7 +65,7 @@ export default function TransferTest({ onBack }: TransferTestProps) {
           <div className="eyebrow">What you practiced</div>
           <div className="transfer-practice-items"><span>1. Name the missing evidence</span><span>2. Calibrate the conclusion</span><span>3. State what would change your mind</span></div>
         </div>
-        <div className="transfer-actions"><button className="pri" type="button" onClick={downloadResults}>Download PDF</button><button type="button" onClick={onBack}>Return to scorecard</button></div>
+        <div className="transfer-actions"><button className="pri" type="button" onClick={onBack}>Return to scorecard</button></div>
       </section>
     );
   }
