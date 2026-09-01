@@ -64,8 +64,8 @@ export default function Research() {
   const PAGE_SIZE = 15;
   const [page, setPage] = useState(1);
   const [scatter, setScatter] = useState<ScatterData | null>(null);
-  const [xAxis, setXAxis] = useState(0);
-  const [yAxis, setYAxis] = useState(1);
+  const [xAxisKey, setXAxisKey] = useState("month6_retention");
+  const [yAxisKey, setYAxisKey] = useState("cac_payback_months");
   // Pairs already reported this session. The server deduplicates at scoring
   // time too, so this only avoids pointless repeat POSTs while someone flicks
   // back and forth through the selects.
@@ -97,6 +97,11 @@ export default function Research() {
      variables that genuinely predict success, and it was invisible to the
      server -- so Evidence Depth could not credit it. Reported on change rather
      than on mount: the default pairing is not something the student chose. */
+  const xAxis = scatter?.axes.findIndex((axis) => axis.key === xAxisKey) ?? -1;
+  const yAxis = scatter?.axes.findIndex((axis) => axis.key === yAxisKey) ?? -1;
+  const safeXAxis = xAxis >= 0 ? xAxis : 0;
+  const safeYAxis = yAxis >= 0 ? yAxis : Math.min(1, (scatter?.axes.length ?? 2) - 1);
+
   const reportAxes = useCallback(
     (xi: number, yi: number) => {
       if (!sessionId || !scatter || xi === yi) return;
@@ -223,18 +228,18 @@ export default function Research() {
     if (!scatter) return [];
     const series = [
       {
-        points: scatter.winners.map((p) => [p[xAxis], p[yAxis]] as [number, number]),
+        points: scatter.winners.map((p) => [p[safeXAxis], p[safeYAxis]] as [number, number]),
         color: COLORS.GREEN, alpha: 0.5, label: "Portfolio",
       },
     ];
     if (scatter.failures.length) {
       series.unshift({
-        points: scatter.failures.map((p) => [p[xAxis], p[yAxis]] as [number, number]),
+        points: scatter.failures.map((p) => [p[safeXAxis], p[safeYAxis]] as [number, number]),
         color: COLORS.RED, alpha: 0.26, label: "Archive",
       });
     }
     return series;
-  }, [scatter, xAxis, yAxis]);
+  }, [scatter, safeXAxis, safeYAxis]);
 
   const evidenceSectorData = useMemo(() => {
     const counts = new Map<string, number>();
@@ -638,30 +643,30 @@ export default function Research() {
 
           <article className="research-evidence-panel research-evidence-scatter">
             <div className="research-evidence-panel-head">
-              <div className="research-evidence-panel-title">Retention vs CAC payback</div>
+              <div className="research-evidence-panel-title">Month-6 retention vs CAC payback</div>
               <div className="research-evidence-controls" aria-label="Evidence chart comparison controls">
                 <select
-                  value={xAxis}
+                  value={xAxisKey}
                   aria-label="Evidence chart X axis metric"
                   onChange={(e) => {
-                    const v = Number(e.target.value);
-                    setXAxis(v);
-                    reportAxes(v, yAxis);
+                    const key = e.target.value;
+                    setXAxisKey(key);
+                    reportAxes(scatter?.axes.findIndex((axis) => axis.key === key) ?? -1, safeYAxis);
                   }}
                 >
-                  {scatter?.axes.map((a, i) => <option key={a.key} value={i}>{a.label}</option>)}
+                  {scatter?.axes.map((a) => <option key={a.key} value={a.key}>{a.label}</option>)}
                 </select>
                 <span className="note">vs</span>
                 <select
-                  value={yAxis}
+                  value={yAxisKey}
                   aria-label="Evidence chart Y axis metric"
                   onChange={(e) => {
-                    const v = Number(e.target.value);
-                    setYAxis(v);
-                    reportAxes(xAxis, v);
+                    const key = e.target.value;
+                    setYAxisKey(key);
+                    reportAxes(safeXAxis, scatter?.axes.findIndex((axis) => axis.key === key) ?? -1);
                   }}
                 >
-                  {scatter?.axes.map((a, i) => <option key={a.key} value={i}>{a.label}</option>)}
+                  {scatter?.axes.map((a) => <option key={a.key} value={a.key}>{a.label}</option>)}
                 </select>
               </div>
             </div>
@@ -669,12 +674,12 @@ export default function Research() {
               <ScatterChart
                 chartId="research.comparison"
                 series={scatterSeries}
-                xLabel={scatter.axes[xAxis]?.label ?? "Metric"}
-                yLabel={scatter.axes[yAxis]?.label ?? "Metric"}
-                xRange={axisRange(xAxis)}
-                yRange={axisRange(yAxis)}
-                xUnit={scatter.axes[xAxis]?.unit ?? ""}
-                yUnit={scatter.axes[yAxis]?.unit ?? ""}
+                xLabel={scatter.axes[safeXAxis]?.label ?? "Metric"}
+                yLabel={scatter.axes[safeYAxis]?.label ?? "Metric"}
+                xRange={axisRange(safeXAxis)}
+                yRange={axisRange(safeYAxis)}
+                xUnit={scatter.axes[safeXAxis]?.unit ?? ""}
+                yUnit={scatter.axes[safeYAxis]?.unit ?? ""}
                 height={210}
                 ariaLabel="Interactive comparison of continuous evidence metrics"
                 introDelay={180}
