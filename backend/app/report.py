@@ -248,9 +248,9 @@ def render(
 <title>Investment report - {e(user_name)}</title>
 <style>
   :root {{
-    --ink: #f4faf8; --dim: rgba(244,250,248,.72); --faint: rgba(244,250,248,.46); --paper: #070907;
+    --ink: #f4faf8; --dim: rgba(244,250,248,.72); --faint: rgba(244,250,248,.46); --paper: #050807;
     --rule: rgba(94,234,212,.18); --teal: #2dd4bf; --teal-deep: #5eead4;
-    --card: #0d1210; --warning: #f2776a; --danger: #f2776a;
+    --card: #0b1513; --warning: #f2776a; --danger: #f2776a;
     --brand-red: #d9483c;
   }}
   * {{ box-sizing:border-box; -webkit-print-color-adjust:exact; print-color-adjust:exact; color-adjust:exact; }}
@@ -571,7 +571,7 @@ def render_scorecard(
     --ink-4:rgba(255,255,255,.54); --ink-5:rgba(255,255,255,.38);
     --line:rgba(94,234,212,.16); --line-soft:rgba(94,234,212,.09);
     --teal:#2dd4bf; --teal-soft:#5eead4; --coral:#f2776a;
-    --bg:#070907; --card:#0c0f0d;
+    --bg:#050807; --card:#0b1513;
   }}
   * {{ box-sizing:border-box; -webkit-print-color-adjust:exact; print-color-adjust:exact; color-adjust:exact; }}
   body {{

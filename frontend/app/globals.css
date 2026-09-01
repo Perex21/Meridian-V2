@@ -2156,42 +2156,44 @@ input[type="range"].green-slider::-moz-range-thumb { background: var(--green); }
    Values remain server-backed; this block is visual/system styling only.
    -------------------------------------------------------------------------- */
 :root {
-  --void: #071a16;
-  --void-rgb: 7 26 22;
-  --base: #0a221c;
-  --raise: #12362c;
-  --raise-2: #1a4738;
+  /* 70-20-10 dark terminal palette: black structure, teal interaction, white reading. */
+  --void: #050807;
+  --void-rgb: 5 8 7;
+  --base: #070d0c;
+  --raise: #0b1513;
+  --raise-2: #0f1d1a;
   --teal: #14b8a6;
   --teal-bright: #2dd4bf;
   --teal-deep: #0f766e;
   --teal-soft: #5eead4;
-  --paper: #071a16;
+  --teal-rgb: 20 184 166;
+  --paper: #050807;
   --navy: #0f766e;
   --navy-light: #14b8a6;
   --orange: #2dd4bf;
   --orange-deep: #5eead4;
   --green: #2dd4bf;
   --on-accent: #04221d;
-  --ink-1: #f4f7f6;
-  --ink-2: #d6e2de;
-  --ink-3: #a9bcb5;
-  --ink-4: #7b918a;
-  --ink-5: #5b6d68;
-  --line: #173028;
-  --line-soft: rgb(23 48 40 / .9);
-  --line-strong: rgb(45 212 191 / .42);
-  --surface: #12362c;
-  --surface-2: #0a221c;
-  --surface-3: #1a4738;
-  --surface-solid: #12362c;
-  --surface-raised: #1a4738;
+  --ink-1: #ffffff;
+  --ink-2: rgb(255 255 255 / .82);
+  --ink-3: rgb(255 255 255 / .68);
+  --ink-4: rgb(255 255 255 / .54);
+  --ink-5: rgb(255 255 255 / .38);
+  --line: rgb(94 234 212 / .14);
+  --line-soft: rgb(94 234 212 / .08);
+  --line-strong: rgb(94 234 212 / .26);
+  --surface: rgb(0 0 0 / .05);
+  --surface-2: rgb(0 0 0 / .09);
+  --surface-3: rgb(0 0 0 / .14);
+  --surface-solid: #0b1513;
+  --surface-raised: #0f1d1a;
   --chart-primary: #2dd4bf;
   --chart-accent: #5eead4;
   --chart-positive: #2dd4bf;
-  --chart-neutral: #8fa39d;
-  --chart-muted: #7b918a;
-  --chart-grid: rgb(94 234 212 / .12);
-  --chart-axis: #a9bcb5;
+  --chart-neutral: #9fb3ac;
+  --chart-muted: rgb(255 255 255 / .46);
+  --chart-grid: rgb(94 234 212 / .1);
+  --chart-axis: rgb(255 255 255 / .55);
 }
 
 .terminal-app-shell { min-height: 100vh; background: var(--void); color: var(--ink-1); }
