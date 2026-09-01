@@ -91,6 +91,16 @@ export default function TerminalLayout({ children }: { children: React.ReactNode
         <header className="terminal-header">
           <div className="header-inner">
             <div className="header-context"><span className="header-eyebrow">Meridian Partners</span><span className="header-separator">/</span><span className="header-page">Analyst terminal</span></div>
+            {state && (() => {
+              const currentIndex = state.rail.findIndex((stage) => stage.state === "current");
+              const currentStage = state.rail[currentIndex];
+              return currentStage ? (
+                <div className="header-stage-context" aria-label={`Stage ${currentIndex + 1} of ${state.rail.length}: ${currentStage.label}`}>
+                  <span>Stage {String(currentIndex + 1).padStart(2, "0")} / {String(state.rail.length).padStart(2, "0")}</span>
+                  <strong>{currentStage.label}</strong>
+                </div>
+              ) : null;
+            })()}
             <div className="header-actions">
               {state && <div className="rail-mini" aria-label="Run progress">{state.rail.map((r) => <i key={r.key} className={r.state} />)}</div>}
               <button className="methodology-header-button" type="button" onClick={() => setMethodologyOpen(true)}>Methodology</button>
