@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import React from "react";
 import CompanyModal from "@/components/CompanyModal";
-import { COLORS, ScatterChart } from "@/components/Chart";
+import { BarChart, COLORS, ScatterChart } from "@/components/Chart";
 import { IconArrowRight, IconBuilding, IconChevronDown, IconClose, IconCoin, IconPercent, IconSearch, IconTrendUp } from "@/components/Icon";
 import { api, qs, type CompanyRow } from "@/lib/api";
 import { money, mult, pct } from "@/lib/format";
@@ -235,6 +235,22 @@ export default function Research() {
     }
     return series;
   }, [scatter, xAxis, yAxis]);
+
+  const evidenceSectorData = useMemo(() => {
+    const counts = new Map<string, number>();
+    rows.forEach((row) => counts.set(row.sector, (counts.get(row.sector) ?? 0) + 1));
+    const totalCount = rows.length || 1;
+    return [...counts.entries()]
+      .sort((a, b) => b[1] - a[1])
+      .map(([label, value]) => ({ label, value, share: Math.round((value / totalCount) * 100), color: SECTOR_COLORS[label] ?? COLORS.PRIMARY }));
+  }, [rows]);
+
+  const evidenceCityBars = useMemo(() => {
+    const counts = new Map<string, number>();
+    rows.forEach((row) => counts.set(row.city, (counts.get(row.city) ?? 0) + 1));
+    return CITIES.map((label) => ({ label, value: counts.get(label) ?? 0, color: COLORS.PRIMARY }))
+      .sort((a, b) => b.value - a.value);
+  }, [rows]);
 
   const axisRange = (idx: number): [number, number] => {
     if (!scatter) return [0, 1];
@@ -480,60 +496,7 @@ export default function Research() {
         </div>
       </div>
 
-      <div className="card pad" style={{ marginBottom: 16 }}>
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 10, marginBottom: 10 }}>
-          <div className="eyebrow" style={{ marginBottom: 0 }}>Cross-plot</div>
-          <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
-            <select
-              value={xAxis}
-              aria-label="Cross-plot X axis metric"
-              onChange={(e) => {
-                const v = Number(e.target.value);
-                setXAxis(v);
-                reportAxes(v, yAxis);
-              }}
-            >
-              {scatter?.axes.map((a, i) => <option key={a.key} value={i}>{a.label}</option>)}
-            </select>
-            <span className="note">vs</span>
-            <select
-              value={yAxis}
-              aria-label="Cross-plot Y axis metric"
-              onChange={(e) => {
-                const v = Number(e.target.value);
-                setYAxis(v);
-                reportAxes(xAxis, v);
-              }}
-            >
-              {scatter?.axes.map((a, i) => <option key={a.key} value={i}>{a.label}</option>)}
-            </select>
-            {!scatter?.failures_locked && scatter?.failures.length ? (
-              <span className="tag" style={{ background: "rgb(var(--neg-rgb) / 0.12)", color: "var(--neg)" }}>
-                Archive overlay on
-              </span>
-            ) : null}
-          </div>
-        </div>
-        {scatter && (
-          <ScatterChart
-            chartId="research.crossplot"
-            series={scatterSeries}
-            xLabel={scatter.axes[xAxis]?.label ?? ""}
-            yLabel={scatter.axes[yAxis]?.label ?? ""}
-            xRange={axisRange(xAxis)}
-            yRange={axisRange(yAxis)}
-            xUnit={scatter.axes[xAxis]?.unit ?? ""}
-            yUnit={scatter.axes[yAxis]?.unit ?? ""}
-            height={280}
-            ariaLabel="Cross-plot of continuous metrics"
-          />
-        )}
-        <p className="note" style={{ marginTop: 8 }}>
-          {scatter?.failures_locked
-            ? "Portfolio companies only — every company plotted here is one the firm backed. This dataset holds no failures to plot against them."
-            : "Hover a point to read it. Click a series in the key to isolate it."}
-        </p>
-      </div>
+      
 
       <div className="card">
         <div style={{ padding: "6px 22px 14px", overflowX: "auto" }}>
@@ -619,6 +582,109 @@ export default function Research() {
           </div>
         </div>
       </div>
+
+      <section className="research-evidence-section" aria-labelledby="research-evidence-title">
+        <div className="research-evidence-heading">
+          <div className="eyebrow" id="research-evidence-title">Evidence</div>
+          <span className="research-evidence-rule" aria-hidden="true" />
+        </div>
+        <div className="research-evidence-grid">
+          <article className="research-evidence-panel">
+            <div className="research-evidence-panel-title">Sector distribution</div>
+            {evidenceSectorData.length > 0 ? (
+              <div className="research-sector-visual">
+                <div
+                  className="research-donut"
+                  role="img"
+                  aria-label={`Sector distribution across ${rows.length} companies`}
+                  style={{
+                    background: `conic-gradient(${evidenceSectorData.reduce<{ stops: string[]; cursor: number }>((acc, item) => {
+                      const next = acc.cursor + (item.value / (rows.length || 1)) * 360;
+                      acc.stops.push(`${item.color} ${acc.cursor}deg ${next}deg`);
+                      acc.cursor = next;
+                      return acc;
+                    }, { stops: [], cursor: 0 }).stops.join(", ")})`,
+                  }}
+                >
+                  <span>{rows.length}</span>
+                </div>
+                <div className="research-sector-legend">
+                  {evidenceSectorData.map((item) => (
+                    <div key={item.label} className="research-sector-legend-row">
+                      <span className="research-sector-dot" style={{ background: item.color }} />
+                      <span>{item.label}</span>
+                      <strong>{item.share}%</strong>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ) : <div className="chart-empty">Waiting for the company set.</div>}
+          </article>
+
+          <article className="research-evidence-panel">
+            <div className="research-evidence-panel-title">HQ distribution</div>
+            {evidenceCityBars.length > 0 ? (
+              <BarChart
+                chartId="research.evidence_hq"
+                bars={evidenceCityBars}
+                max={Math.max(...evidenceCityBars.map((bar) => bar.value), 1)}
+                ariaLabel="Companies by headquarters city"
+                valueLabel="Companies"
+                height={210}
+                introDelay={120}
+              />
+            ) : <div className="chart-empty">Waiting for the company set.</div>}
+          </article>
+
+          <article className="research-evidence-panel research-evidence-scatter">
+            <div className="research-evidence-panel-head">
+              <div className="research-evidence-panel-title">Retention vs CAC payback</div>
+              <div className="research-evidence-controls" aria-label="Evidence chart comparison controls">
+                <select
+                  value={xAxis}
+                  aria-label="Evidence chart X axis metric"
+                  onChange={(e) => {
+                    const v = Number(e.target.value);
+                    setXAxis(v);
+                    reportAxes(v, yAxis);
+                  }}
+                >
+                  {scatter?.axes.map((a, i) => <option key={a.key} value={i}>{a.label}</option>)}
+                </select>
+                <span className="note">vs</span>
+                <select
+                  value={yAxis}
+                  aria-label="Evidence chart Y axis metric"
+                  onChange={(e) => {
+                    const v = Number(e.target.value);
+                    setYAxis(v);
+                    reportAxes(xAxis, v);
+                  }}
+                >
+                  {scatter?.axes.map((a, i) => <option key={a.key} value={i}>{a.label}</option>)}
+                </select>
+              </div>
+            </div>
+            {scatter ? (
+              <ScatterChart
+                chartId="research.comparison"
+                series={scatterSeries}
+                xLabel={scatter.axes[xAxis]?.label ?? "Metric"}
+                yLabel={scatter.axes[yAxis]?.label ?? "Metric"}
+                xRange={axisRange(xAxis)}
+                yRange={axisRange(yAxis)}
+                xUnit={scatter.axes[xAxis]?.unit ?? ""}
+                yUnit={scatter.axes[yAxis]?.unit ?? ""}
+                height={210}
+                ariaLabel="Interactive comparison of continuous evidence metrics"
+                introDelay={180}
+              />
+            ) : <div className="chart-empty">Waiting for the evidence plot.</div>}
+            {!scatter?.failures_locked && scatter?.failures.length ? <span className="research-archive-pill">Archive overlay on</span> : null}
+          </article>
+        </div>
+        <p className="research-evidence-footnote">All metrics based on the current matching result set <span>•</span> Data available from this run</p>
+      </section>
 
       <div
         style={{
