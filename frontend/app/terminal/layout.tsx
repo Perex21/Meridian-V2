@@ -9,6 +9,7 @@ import RunPanel from "@/components/RunPanel";
 import WaveCanvas from "@/components/WaveCanvas";
 import AmbientAudio from "@/components/AmbientAudio";
 import Methodology from "@/components/Methodology";
+import ScrollRiseScope from "@/components/ScrollRiseScope";
 
 export default function TerminalLayout({ children }: { children: React.ReactNode }) {
   const { ready, state } = useStore();
@@ -98,7 +99,11 @@ export default function TerminalLayout({ children }: { children: React.ReactNode
             </div>
           </div>
         </header>
-        <main className="wrap">{methodologyOpen ? <Methodology onClose={() => setMethodologyOpen(false)} /> : children}</main>
+        <main className="wrap">
+          <ScrollRiseScope>
+            {methodologyOpen ? <Methodology onClose={() => setMethodologyOpen(false)} /> : children}
+          </ScrollRiseScope>
+        </main>
       </div>
       <RunPanel open={runOpen} />
     </div>
