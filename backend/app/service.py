@@ -9,7 +9,7 @@ administers.
 
 from __future__ import annotations
 
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 
 from fastapi import HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -87,7 +87,17 @@ async def record_event(
     )
 
 
+def deliberation_deadline(run: RunSession) -> datetime | None:
+    if run.deliberation_started_at is None:
+        return None
+    started = run.deliberation_started_at
+    if started.tzinfo is None:
+        started = started.replace(tzinfo=timezone.utc)
+    return started + timedelta(seconds=settings.deliberation_seconds)
+
+
 def deliberation_remaining(run: RunSession) -> int:
+
     if run.deliberation_started_at is None:
         return settings.deliberation_seconds
     started = run.deliberation_started_at
