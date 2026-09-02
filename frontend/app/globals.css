@@ -1890,18 +1890,32 @@ input[type="range"].green-slider::-moz-range-thumb { background: var(--green); }
 }
 
 .terminal-loading-brand {
+  position: relative;
   display: flex;
   align-items: center;
-  gap: 10px;
+  justify-content: center;
+  width: 100%;
+  height: 18px;
   font-size: 16px;
   font-weight: 500;
   letter-spacing: -0.02em;
   color: rgb(var(--ink-rgb) / 0.9);
 }
 
+/* Center the wordmark within the loading content area. */
+.terminal-loading-brand > span {
+  position: static;
+  transform: none;
+  white-space: nowrap;
+}
+
 .terminal-loading-brand .mark {
+  position: absolute;
+  top: 50%;
+  left: 50%;
   width: 18px;
   height: 18px;
+  transform: translate(-100px, -50%);
 }
 
 .terminal-loading-spinner {

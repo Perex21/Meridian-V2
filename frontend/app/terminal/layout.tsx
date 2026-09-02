@@ -36,7 +36,7 @@ export default function TerminalLayout({ children }: { children: React.ReactNode
       <div className="terminal-loading">
         <WaveCanvas variant="dark" />
         <div className="terminal-loading-inner">
-          <div className="terminal-loading-brand"><div className="mark" /><span>Meridian Partners</span></div>
+          <div className="terminal-loading-brand"><span>Meridian Partners</span></div>
           <div className="terminal-loading-spinner" aria-hidden="true" />
           <p className="terminal-loading-text">Loading terminal…</p>
           <p className="terminal-loading-sub">Connecting to analyst environment</p>
