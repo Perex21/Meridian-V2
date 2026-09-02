@@ -1737,9 +1737,10 @@ input[type="range"].green-slider::-moz-range-thumb { background: var(--green); }
 .cm-seat:active:not(:disabled) { transform: translate(-50%, -50%) scale(1.01); }
 .cm-seat:disabled { cursor: default; opacity: 1; }
 
-/* 46px, i.e. DISC_R * 2 in Committee.tsx. Keep the two in step. */
+/* 60px, i.e. DISC_R * 2 in Committee.tsx. Keep the two in step. */
 .cm-disc {
-  width: 46px; height: 46px; border-radius: 50%;
+  width: 60px; height: 60px; border-radius: 50%;
+  overflow: hidden;
   display: flex; align-items: center; justify-content: center;
   font-family: var(--font-mono), monospace; font-size: 13px; font-weight: 500;
   letter-spacing: -0.02em;
@@ -1753,6 +1754,19 @@ input[type="range"].green-slider::-moz-range-thumb { background: var(--green); }
   letter-spacing: -0.01em; color: var(--ink-4);
   transition: color var(--med);
 }
+
+/* Full-color committee portraits. The fixed crop keeps each source image
+   visually consistent inside the existing 46px diagram seat. */
+.cm-disc img {
+  display: block;
+  width: 100%; height: 100%;
+  object-fit: cover;
+  object-position: center;
+  border-radius: 50%;
+}
+.cm-seat.pending .cm-disc img { opacity: 0.82; }
+.cm-seat.done .cm-disc img { opacity: 0.92; }
+.cm-seat.active .cm-disc img { opacity: 1; }
 
 /* Muted: has not spoken. */
 .cm-seat.pending .cm-disc {
@@ -1794,7 +1808,7 @@ input[type="range"].green-slider::-moz-range-thumb { background: var(--green); }
    in CSS pixels, do not -- so they grow relative to the spokes and would start
    swallowing the line ends again. Shrink them in step. */
 @media (max-width: 430px) {
-  .cm-disc { width: 38px; height: 38px; font-size: 11.5px; }
+  .cm-disc { width: 48px; height: 48px; font-size: 11.5px; }
   .cm-seat-name { font-size: 10.5px; }
 }
 

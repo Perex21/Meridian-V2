@@ -18,7 +18,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { api } from "@/lib/api";
-import { IconAlert, IconCheck } from "@/components/Icon";
+import { IconAlert } from "@/components/Icon";
 import { useStore } from "@/lib/store";
 
 interface Partner { index: number; name: string; title: string; question: string }
@@ -38,6 +38,21 @@ const SEATS: Record<string, number> = {
   Priya: 198,
 };
 
+/* Display metadata is kept in the frontend so the backend's stable partner
+   indices and answer payloads remain unchanged. */
+const MEMBER_META: Record<string, { displayName: string; photo: string }> = {
+  Ana: { displayName: "Ana", photo: "/committee/ana.png" },
+  Vikram: { displayName: "Vikram", photo: "/committee/vikram.png" },
+  Rashi: { displayName: "Rachel", photo: "/committee/rachel.png" },
+  David: { displayName: "David", photo: "/committee/david.png" },
+  Priya: { displayName: "Priya", photo: "/committee/priya.png" },
+};
+
+function memberMeta(partner: Partner) {
+  const firstName = partner.name.split(" ")[0];
+  return MEMBER_META[firstName] ?? { displayName: firstName, photo: "" };
+}
+
 /* The viewBox is mapped 1:1 onto the container's max width (400px) so that one
    SVG user unit is one CSS pixel. That matters because the seat discs are sized
    in CSS pixels while the spokes are drawn in SVG units -- without a shared
@@ -48,8 +63,8 @@ const VIEW_H = 300;
 const CX = VIEW_W / 2;
 const CY = 132;
 const R = 108;          // hub -> seat centre
-const DISC_R = 23;      // half of .cm-disc's 46px
-const SPOKE_GAP = 7;    // breathing room between line end and disc edge
+const DISC_R = 30;      // half of .cm-disc's 60px portrait
+const SPOKE_GAP = 8;    // breathing room between line end and disc edge
 const LINE_END = R - DISC_R - SPOKE_GAP;
 
 function seatAngle(p: Partner, i: number, n: number): number {
@@ -58,9 +73,7 @@ function seatAngle(p: Partner, i: number, n: number): number {
   return SEATS[first] ?? (i / n) * 360 - 90;
 }
 
-function initials(name: string): string {
-  return name.split(" ").map((w) => w[0]).join("").slice(0, 2);
-}
+
 
 export default function Committee() {
   const { go, sessionId, refreshState } = useStore();
@@ -199,17 +212,21 @@ export default function Committee() {
               disabled={i > current}
               aria-current={i === current ? "step" : undefined}
               title={
-                i > current
-                  ? `${n.partner.name} has not spoken yet`
+i > current
+                  ? `${memberMeta(n.partner).displayName} has not spoken yet`
                   : i < current
-                    ? `Review your answer to ${n.partner.name}`
-                    : `${n.partner.name} has the floor`
+                    ? `Review your answer to ${memberMeta(n.partner).displayName}`
+                    : `${memberMeta(n.partner).displayName} has the floor`
               }
             >
-              <span className="cm-disc">
-                {n.state === "done" ? <IconCheck size={15} /> : initials(n.partner.name)}
+<span className="cm-disc">
+                <img
+                  src={memberMeta(n.partner).photo}
+                  alt=""
+                  aria-hidden="true"
+                />
               </span>
-              <span className="cm-seat-name">{n.partner.name.split(" ")[0]}</span>
+              <span className="cm-seat-name">{memberMeta(n.partner).displayName}</span>
             </button>
           ))}
         </div>
@@ -220,7 +237,7 @@ export default function Committee() {
             <span className="cm-floor-k">
               {reviewing ? "Reviewing" : "Now speaking"}
             </span>
-            <span className="cm-floor-name">{shown?.name ?? "—"}</span>
+            <span className="cm-floor-name">{shown ? memberMeta(shown).displayName : "—"}</span>
             <span className="cm-floor-title">{shown?.title ?? ""}</span>
             <span className="cm-floor-step mono">
               Partner {viewing + 1} of {partners.length}
@@ -236,7 +253,7 @@ export default function Committee() {
                 onClick={() => onSeat(i)}
                 disabled={i > current}
               >
-                {p.name.split(" ")[0]}
+                {memberMeta(p).displayName}
               </button>
             ))}
           </div>
@@ -255,7 +272,7 @@ export default function Committee() {
                     style={{ marginTop: 12 }}
                     onClick={() => setViewing(current)}
                   >
-                    Back to {partners[current]?.name.split(" ")[0]}
+                    Back to {partners[current] ? memberMeta(partners[current]).displayName : "the current partner"}
                   </button>
                 </div>
               ) : (
