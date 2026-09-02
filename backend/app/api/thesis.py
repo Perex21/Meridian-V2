@@ -6,7 +6,7 @@ from ..committee import N_PARTNERS, build as build_committee
 from ..deps import Db, OwnedSession
 from ..schemas import CommitteeAnswerRequest, ThesisRequest
 from ..scoring import analyse_free_text
-from ..service import deliberation_remaining, now, record_event
+from ..service import deliberation_deadline, deliberation_remaining, now, record_event
 from ..sim import parameters as P
 
 router = APIRouter(prefix="/sessions/{session_id}", tags=["thesis"])
@@ -137,7 +137,13 @@ async def start_deliberation(run: OwnedSession, db: Db) -> dict:
     if run.deliberation_started_at is None:
         run.deliberation_started_at = now()
         db.add(run)
-    return {"remaining_seconds": deliberation_remaining(run)}
+    server_now = now()
+    deadline = deliberation_deadline(run)
+    return {
+        "remaining_seconds": deliberation_remaining(run),
+        "server_time": server_now.isoformat(),
+        "deadline_at": deadline.isoformat() if deadline else None,
+    }
 
 
 @router.get("/deliberation")
@@ -148,10 +154,15 @@ async def deliberation(run: OwnedSession) -> dict:
     receiving contradicting evidence -- the interval that makes the reveal land
     as a correction rather than as part of the same exercise.
     """
+    server_now = now()
     remaining = deliberation_remaining(run)
+    deadline = deliberation_deadline(run)
     return {
         "remaining_seconds": remaining,
+        "server_time": server_now.isoformat(),
+        "deadline_at": deadline.isoformat() if deadline else None,
         "ready": remaining <= 0 and run.deliberation_started_at is not None,
+
         "reviewing": [
             {"variable": v, "confidence": (run.thesis_confidence or {}).get(v)}
             for v in (run.thesis_variables or [])
